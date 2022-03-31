@@ -1,48 +1,64 @@
 package memmemov.datahouse
 
+import scalafx.Includes._
 import scalafx.application.JFXApp3
 import scalafx.geometry.Insets
 import scalafx.scene.Scene
+import scalafx.scene.canvas.Canvas
 import scalafx.scene.effect.DropShadow
-import scalafx.scene.layout.HBox
+import scalafx.scene.layout.{HBox, Pane, Region, StackPane, VBox}
 import scalafx.scene.paint.Color._
 import scalafx.scene.paint._
-import scalafx.scene.text.Text
+import scalafx.scene.shape.{Box, Rectangle}
+import scalafx.scene.text.{Font, Text}
 
 object ScalaFXHelloWorld extends JFXApp3 {
 
   override def start(): Unit = {
     stage = new JFXApp3.PrimaryStage {
-      //    initStyle(StageStyle.Unified)
-      title = "ScalaFX Hello World"
+      title.value = "Hello Stage"
+      width = 600
+      height = 450
       scene = new Scene {
-        fill = Color.rgb(38, 38, 38)
-        content = new HBox {
-          padding = Insets(50, 80, 50, 80)
-          children = Seq(
-            new Text {
-              text = "Scala"
-              style = "-fx-font: normal bold 100pt sans-serif"
-              fill = new LinearGradient(
-                endX = 0,
-                stops = Stops(Red, DarkRed))
-            },
-            new Text {
-              text = "FX"
-              style = "-fx-font: italic bold 100pt sans-serif"
-              fill = new LinearGradient(
-                endX = 0,
-                stops = Stops(White, DarkGray)
+        new VBox(
+          new HBox(
+            new Pane {
+              fill = Black
+              getChildren.addOne(
+                new Text("machine") {
+                  x = 20
+                  y = 50
+                  stroke = Gray
+                  font = new Font("Arial", 20)
+                  fill <== when(hover) choose LightGray otherwise DarkGray
+                }
               )
-              effect = new DropShadow {
-                color = DarkGray
-                radius = 15
-                spread = 0.25
-              }
+
             }
           )
-        }
+        )
       }
+
+//        new VBox(
+//        new HBox(
+//          new Rectangle { r =>
+//            fill = Black
+//            onMouseClicked = event => {
+//              r.parent.addcontent.add(
+//                {
+//                  new Text("machine") {
+//                    x = event.getX
+//                    y = event.getY
+//                    stroke = Gray
+//                    font = new Font("Arial", 20)
+//                    fill <== when(hover) choose LightGray otherwise DarkGray
+//                  }
+//                }
+//              )
+//            }
+//          }
+//        )
+//      )
     }
   }
 }
