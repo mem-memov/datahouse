@@ -30,3 +30,27 @@ fork := true
 // set the main class for the main 'run' task
 // change Compile to Test to set it for 'test:run'
 Compile / run / mainClass := Some("memmemov.datahouse.ScalaFXHelloWorld")
+
+// JSON library
+val circeVersion = "0.14.1"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
+
+// config library
+libraryDependencies += "is.cir" %% "ciris" % "2.3.2"
+libraryDependencies += "is.cir" %% "ciris-circe-yaml" % "2.3.2"
+
+// IO library
+libraryDependencies += "org.typelevel" %% "cats-effect" % "3.3.9"
+
+// HTTP library
+val Http4sVersion = "1.0.0-M31"
+libraryDependencies += "org.http4s" %% "http4s-ember-server" % Http4sVersion
+libraryDependencies += "org.http4s" %% "http4s-dsl" % Http4sVersion
+
+// Stream library
+libraryDependencies += "co.fs2" %% "fs2-core" % "3.2.5"
