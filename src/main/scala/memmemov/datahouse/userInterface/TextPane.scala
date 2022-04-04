@@ -1,8 +1,6 @@
 package memmemov.datahouse.userInterface
 
 import scalafx.Includes._
-import scalafx.scene.control.Alert
-import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.layout.Pane
 import scalafx.scene.paint.Color._
 import scalafx.scene.text.{Font, Text}
@@ -22,13 +20,12 @@ object TextPane {
         p.getChildren.addOne(
           new Text("machine") {
             x = event.getX
-            y = event.getY - 40
+            y = event.getY
             stroke = Gray
             font = new Font("Arial", 20)
             fill <== when(hover) choose LightGray otherwise DarkGray
           }
         )
-      new Alert(AlertType.Information, s"Hello Dialogs!!! ${p.width.value}").showAndWait()
 
     }
 }
