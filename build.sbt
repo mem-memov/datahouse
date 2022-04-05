@@ -2,7 +2,7 @@ name         := "datahouse"
 organization := "memmemov"
 version      := "0.0.1"
 
-scalaVersion := "2.13.7"
+scalaVersion := "3.1.1"
 
 libraryDependencies ++= Seq(
   "org.scalafx"   %% "scalafx"   % "17.0.1-R26",
