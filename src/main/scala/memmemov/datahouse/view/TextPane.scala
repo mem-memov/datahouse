@@ -9,8 +9,20 @@ import scalafx.scene.paint.Color.*
 import scalafx.scene.text.{Font, Text}
 import scalafx.event.Event
 
+import java.util.UUID
+
 object TextPane {
-  def apply(container: Pane, bottomOffset: ReadOnlyDoubleProperty, textInput: viewModel.TextInput) =
+  def apply(
+   container: Pane,
+   bottomOffset: ReadOnlyDoubleProperty,
+   textInput: viewModel.TextInput
+  ) =
+    var frameViewModel = viewModel.Frame(
+      model.Frame(Map.empty[model.Number, model.Word])
+    )
+
+    var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
+
     new Pane { self =>
       minWidth <== container.width
       minHeight <== container.height - bottomOffset
@@ -26,18 +38,26 @@ object TextPane {
 
         if !textValue.isEmpty then
           textInput.inputProperty.value = ""
-          self.getChildren.addOne(
-            WordDisplay(
-              viewModel.Word(
-                model.Word(
-                  letters = textValue,
-                  position = model.Position(
-                    horizontal = model.Coordinate(event.getX.toInt),
-                    vertical = model.Coordinate(event.getY.toInt)
-                  )
-                )
+
+          val wordModel = model.Word.fromLettersAndCoordinates(textValue, event.getX.toInt, event.getY.toInt)
+
+          frameViewModel = frameViewModel.addWord(wordModel)
+
+          frameViewModel.lastWord match
+            case None => ()
+            case Some(word) =>
+              self.getChildren.addOne(
+                WordDisplay(word)
               )
-            )
-          )
+
+      onScroll = event =>
+        val isForward = event.getDeltaY > 0
+        if isForward && !frameViewModel.isEmpty then
+          val frameModel = frameViewModel.toModel
+          storyModel = storyModel.addFrame(frameModel)
+          frameViewModel = viewModel.Frame(model.Frame.empty)
+          self.children.clear()
+//        if !isForward then
+
     }
 }
