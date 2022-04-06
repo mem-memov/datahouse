@@ -2,10 +2,8 @@ package memmemov.datahouse.model
 
 case class Story(identifier: Identifier, frames: Map[Number, Frame]):
 
-  def addFrame(frame: Frame): Story =
-    val newKey = maxKey.map(_.increment).getOrElse(Number(1))
-    val newFrames = frames + (newKey -> frame)
-    copy(frames = newFrames)
+  def hasNumber(number: Number): Boolean =
+    frames.keys.exists(number.isEqual)
 
   private def maxKey: Option[Number] =
     frames.keys.foldLeft(Option.empty[Number]) { (maxNumber, number) =>
