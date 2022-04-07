@@ -6,26 +6,45 @@ import scalafx.scene.Group
 import scalafx.scene.paint.Color.{Black, DarkGray, Gray, LightGray, color}
 import scalafx.scene.text.{Font, Text}
 import scalafx.scene.shape.Rectangle
+import scalafx.scene.control.Label
 
 object WordDisplay:
-  def apply(word: viewModel.Word) = new Group {
+  def apply(word: viewModel.Word) =
+
     val textItem = new Text {
       text <== word.letters
-      x <== word.position.horizontal.value
-      y <== word.position.vertical.value
+      x <== word.position.horizontal
+      y <== word.position.vertical
       stroke = Gray
       font = new Font("Arial", 20)
       fill = Black
     }
+
     val rectangleItem = new Rectangle {
-//      fill <== when(hover) choose LightGray otherwise DarkGray
+      //      fill <== when(hover) choose LightGray otherwise DarkGray
       fill = LightGray
-      x <== word.position.horizontal.value - 5
-      y <== word.position.vertical.value - textItem.layoutBounds.value.getHeight - 5
+      x <== word.position.horizontal - 5
+      y <== word.position.vertical - textItem.layoutBounds.value.getHeight - 5
       width <== textItem.layoutBounds.value.getWidth + 10
       height <== textItem.layoutBounds.value.getHeight + 10
       arcWidth = 10
       arcHeight = 10
+      opacity = 100
     }
-    children = Seq(rectangleItem, textItem)
-  }
+
+    val group = new Group {
+      children = Seq(rectangleItem, textItem)
+    }
+
+    var dragOffsetX: Double = 0
+    var dragOffsetY: Double = 0
+
+    group.onMousePressed = mouseEvent =>
+      dragOffsetX = mouseEvent.getX - word.position.horizontal.value
+      dragOffsetY = mouseEvent.getY - word.position.vertical.value
+
+    group.onMouseDragged = mouseEvent =>
+      word.position.horizontal.value = mouseEvent.getX - dragOffsetX
+      word.position.vertical.value = mouseEvent.getY - dragOffsetY
+
+    group

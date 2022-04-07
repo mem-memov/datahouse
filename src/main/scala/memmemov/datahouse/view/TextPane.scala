@@ -62,11 +62,16 @@ object TextPane {
       val frameModel = storyModel.frames(n)
       setFrameModel(frameModel)
 
+    def updateStoryFrame(n: model.Number) =
+      val frameModel = frameViewModel.toModel
+      val newFrames = storyModel.frames.updated(number, frameModel)
+      storyModel = storyModel.copy(frames = newFrames)
+
     pane.onMouseClicked = event =>
 
       val textValue = textInput.inputProperty.value
 
-      if !textValue.isEmpty then
+      if textValue.nonEmpty then
         textInput.inputProperty.value = ""
 
         val wordModel = model.Word.fromLettersAndCoordinates(textValue, event.getX.toInt, event.getY.toInt)
@@ -78,6 +83,9 @@ object TextPane {
       val isBackward = event.getDeltaY < 0
 
       if isForward then {
+        if storyModel.hasNumber(number) then {
+          updateStoryFrame(number)
+        }
         if storyModel.hasNumber(number.increment) then {
           loadFrameFromStory(number.increment)
           number = number.increment
@@ -90,12 +98,15 @@ object TextPane {
       }
 
       if isBackward then {
+        if storyModel.hasNumber(number) then {
+          updateStoryFrame(number)
+        }
         if !frameViewModel.isEmpty && !storyModel.hasNumber(number) then {
           appendCurrentFrameToStory(number)
         }
-        number = number.decrement
-        if storyModel.hasNumber(number) then {
-          loadFrameFromStory(number)
+        if storyModel.hasNumber(number.decrement) then {
+          loadFrameFromStory(number.decrement)
+          number = number.decrement
         }
       }
 
