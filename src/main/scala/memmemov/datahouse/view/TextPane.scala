@@ -11,19 +11,20 @@ import scalafx.event.Event
 
 import java.util.UUID
 
-object TextPane {
+object TextPane:
+
   def apply(
-             container: Pane,
-             bottomOffset: ReadOnlyDoubleProperty,
-             textInput: viewModel.TextInput
-           ) =
+   container: Pane,
+   bottomOffset: ReadOnlyDoubleProperty,
+   textInput: viewModel.TextInput
+  ) =
+
     var frameViewModel = viewModel.Frame(
       model.Frame(Map.empty[model.Number, model.Word])
     )
-
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
-
     var number = model.Number(1)
+    var isNewFrame = true
 
     val pane = new Pane {
       minWidth <== container.width
@@ -56,7 +57,7 @@ object TextPane {
       val frameModel = frameViewModel.toModel
       val newFrames = storyModel.frames.updated(number, frameModel)
       storyModel = storyModel.copy(frames = newFrames)
-      clearFrame()
+
 
     def loadFrameFromStory(n: model.Number) =
       val frameModel = storyModel.frames(n)
@@ -83,32 +84,48 @@ object TextPane {
       val isBackward = event.getDeltaY < 0
 
       if isForward then {
-        if storyModel.hasNumber(number) then {
-          updateStoryFrame(number)
-        }
-        if storyModel.hasNumber(number.increment) then {
-          loadFrameFromStory(number.increment)
-          number = number.increment
-        } else {
+        if isNewFrame then {
           if !frameViewModel.isEmpty then {
             appendCurrentFrameToStory(number)
             number = number.increment
+            clearFrame()
+            isNewFrame = true
+          }
+        } else {
+          updateStoryFrame(number)
+          if storyModel.hasNumber(number.increment) then {
+            loadFrameFromStory(number.increment)
+            number = number.increment
+            isNewFrame = false
+          } else {
+            number = number.increment
+            clearFrame()
+            isNewFrame = true
           }
         }
       }
 
       if isBackward then {
-        if storyModel.hasNumber(number) then {
-          updateStoryFrame(number)
-        }
-        if !frameViewModel.isEmpty && !storyModel.hasNumber(number) then {
+        if isNewFrame then {
           appendCurrentFrameToStory(number)
-        }
-        if storyModel.hasNumber(number.decrement) then {
-          loadFrameFromStory(number.decrement)
-          number = number.decrement
+          if storyModel.hasNumber(number.decrement) then {
+            loadFrameFromStory(number.decrement)
+            number = number.decrement
+            isNewFrame = false
+          } else {
+            isNewFrame = false
+          }
+        } else {
+          updateStoryFrame(number)
+          if storyModel.hasNumber(number.decrement) then {
+            loadFrameFromStory(number.decrement)
+            number = number.decrement
+            isNewFrame = false
+          } else {
+            isNewFrame = false
+          }
         }
       }
 
     pane
-}
+

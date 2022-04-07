@@ -1,17 +1,21 @@
 package memmemov.datahouse.viewModel
 
+import scalafx.Includes._
 import memmemov.datahouse.{model, viewModel}
+import scalafx.beans.property.MapProperty
 
-case class Frame(data: model.Frame):
+case class Frame(private var data: model.Frame):
 
-  val words: Map[Int, Word] = data.words.map(
-    (number, wordModel) => (number.value, Word(wordModel))
-  )
+  val words: MapProperty[model.Number, Word] =
+    val mapProperty = new MapProperty[model.Number, Word]()
+    data.words.foreach((numberModel, wordModel) => mapProperty.put(numberModel, Word(wordModel)))
+    mapProperty
 
   def toModel: model.Frame =
-    model.Frame(
-      words.map((numberValue, wordViewModel) => (model.Number(numberValue), wordViewModel.toModel))
-    )
+    val wordModels = words.value.toMap.map {
+      case (numberModel, word) => (numberModel, word.toModel)
+    }
+    model.Frame(wordModels)
 
   def addWord(wordModel: model.Word): Frame =
     val newKey = model.Number(maxKey.map(_ + 1).getOrElse(1))
@@ -21,8 +25,8 @@ case class Frame(data: model.Frame):
   def lastWord: Option[Word] =
     maxKey.map(words(_))
 
-  def isEmpty: Boolean =
-    words.isEmpty
+  def isEmpty: Boolean = data.words.isEmpty
+
 
   private def maxKey: Option[Int] =
     words.keys.foldLeft(Option.empty) { (maxKey, key) =>
