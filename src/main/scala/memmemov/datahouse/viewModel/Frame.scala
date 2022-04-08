@@ -3,13 +3,20 @@ package memmemov.datahouse.viewModel
 import scalafx.Includes._
 import memmemov.datahouse.{model, viewModel}
 import scalafx.beans.property.MapProperty
+import scalafx.collections.ObservableMap
 
-case class Frame(private var data: model.Frame):
+trait Frame:
 
-  val words: MapProperty[model.Number, Word] =
-    val mapProperty = new MapProperty[model.Number, Word]()
-    data.words.foreach((numberModel, wordModel) => mapProperty.put(numberModel, Word(wordModel)))
-    mapProperty
+  val words: MapProperty[model.Number, Word]
+
+  def addWord(wordModel: model.Word): (model.Number, Word) =
+    val newNumber = maxKey.map(_.increment).getOrElse(model.Number(1))
+    val newWord = Word.fromModel(wordModel)
+    words.put(newNumber, newWord)
+    (newNumber, newWord)
+
+  def isEmpty: Boolean = words.value.isEmpty
+  def nonEmpty: Boolean = words.value.nonEmpty
 
   def toModel: model.Frame =
     val wordModels = words.value.toMap.map {
@@ -17,20 +24,19 @@ case class Frame(private var data: model.Frame):
     }
     model.Frame(wordModels)
 
-  def addWord(wordModel: model.Word): Frame =
-    val newKey = model.Number(maxKey.map(_ + 1).getOrElse(1))
-    val newWords = data.words + (newKey -> wordModel)
-    Frame(data.copy(words = newWords))
-
-  def lastWord: Option[Word] =
-    maxKey.map(words(_))
-
-  def isEmpty: Boolean = data.words.isEmpty
-
-
-  private def maxKey: Option[Int] =
-    words.keys.foldLeft(Option.empty) { (maxKey, key) =>
+  private def maxKey: Option[model.Number] =
+    words.value.keys.toList.foldLeft(Option.empty) { (maxKey, key) =>
       maxKey match
         case None => Some(key)
-        case Some(k) => if key > k then Some(key) else Some(k)
+        case Some(k) => if key.value > k.value then Some(key) else Some(k)
     }
+
+object Frame:
+
+  def fromModel(data: model.Frame): Frame =
+    val mapWithWords = data.words.map { (numberModel, wordModel) =>
+      (numberModel, Word.fromModel(wordModel))
+    }
+    val observableMap = ObservableMap.from(mapWithWords)
+    new Frame:
+      override val words: MapProperty[model.Number, Word] = MapProperty(this, "words", observableMap)

@@ -1,5 +1,6 @@
 package memmemov.datahouse.view
 
+import javafx.collections.MapChangeListener
 import memmemov.datahouse.viewModel
 import memmemov.datahouse.model
 import scalafx.beans.property.ReadOnlyDoubleProperty
@@ -19,7 +20,7 @@ object TextPane:
    textInput: viewModel.TextInput
   ) =
 
-    var frameViewModel = viewModel.Frame(
+    var frameViewModel = viewModel.Frame.fromModel(
       model.Frame(Map.empty[model.Number, model.Word])
     )
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
@@ -33,35 +34,27 @@ object TextPane:
       maxHeight <== minHeight
     }
 
-    def clearFrame() =
+//    var subscription =
+    frameViewModel.words.onChange {
       pane.children.clear()
-      frameViewModel = viewModel.Frame(model.Frame.empty)
-
-    def setFrameModel(frameModel: model.Frame) =
-      clearFrame()
-      frameModel.words.foreach { (number, word) =>
-        addWordModel(word)
+      frameViewModel.words.value.map { (numberModel, wordViewModel) =>
+        pane.getChildren.addOne(
+          WordDisplay(wordViewModel)
+        )
       }
-
-    def addWordModel(wordModel: model.Word) =
-      frameViewModel = frameViewModel.addWord(wordModel)
-
-      frameViewModel.lastWord match
-        case None => ()
-        case Some(word) =>
-          pane.getChildren.addOne(
-            WordDisplay(word)
-          )
+    }
 
     def appendCurrentFrameToStory(n: model.Number) =
       val frameModel = frameViewModel.toModel
       val newFrames = storyModel.frames.updated(number, frameModel)
       storyModel = storyModel.copy(frames = newFrames)
 
-
     def loadFrameFromStory(n: model.Number) =
       val frameModel = storyModel.frames(n)
-      setFrameModel(frameModel)
+      frameViewModel.words.clear()
+      frameModel.words.foreach { (number, word) =>
+        frameViewModel.addWord(word)
+      }
 
     def updateStoryFrame(n: model.Number) =
       val frameModel = frameViewModel.toModel
@@ -76,7 +69,8 @@ object TextPane:
         textInput.inputProperty.value = ""
 
         val wordModel = model.Word.fromLettersAndCoordinates(textValue, event.getX.toInt, event.getY.toInt)
-        addWordModel(wordModel)
+        val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
+
 
     pane.onScroll = event =>
 
@@ -84,46 +78,27 @@ object TextPane:
       val isBackward = event.getDeltaY < 0
 
       if isForward then {
-        if isNewFrame then {
-          if !frameViewModel.isEmpty then {
-            appendCurrentFrameToStory(number)
-            number = number.increment
-            clearFrame()
-            isNewFrame = true
-          }
-        } else {
+        if storyModel.hasNumber(number.increment) then {
           updateStoryFrame(number)
-          if storyModel.hasNumber(number.increment) then {
-            loadFrameFromStory(number.increment)
+          loadFrameFromStory(number.increment)
+          number = number.increment
+        } else {
+          if frameViewModel.nonEmpty then {
+            appendCurrentFrameToStory(number)
+            frameViewModel.words.clear()
             number = number.increment
-            isNewFrame = false
-          } else {
-            number = number.increment
-            clearFrame()
-            isNewFrame = true
           }
         }
       }
 
       if isBackward then {
-        if isNewFrame then {
+        if !storyModel.hasNumber(number.increment) then {
           appendCurrentFrameToStory(number)
-          if storyModel.hasNumber(number.decrement) then {
-            loadFrameFromStory(number.decrement)
-            number = number.decrement
-            isNewFrame = false
-          } else {
-            isNewFrame = false
-          }
-        } else {
+        }
+        if storyModel.hasNumber(number.decrement) then {
           updateStoryFrame(number)
-          if storyModel.hasNumber(number.decrement) then {
-            loadFrameFromStory(number.decrement)
-            number = number.decrement
-            isNewFrame = false
-          } else {
-            isNewFrame = false
-          }
+          loadFrameFromStory(number.decrement)
+          number = number.decrement
         }
       }
 

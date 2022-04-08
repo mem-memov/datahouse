@@ -3,14 +3,20 @@ package memmemov.datahouse.viewModel
 import scalafx.beans.property.StringProperty
 import memmemov.datahouse.model
 
-case class Word(data: model.Word):
-  
-  val letters = new StringProperty(this, "letters", data.letters)
-  
-  val position: Position = Position(data.position)
-  
+trait Word:
+
+  val letters: StringProperty
+  val position: Position
+
   def toModel: model.Word =
     model.Word(
       letters.value,
       position.toModel
     )
+
+object Word:
+
+  def fromModel(data: model.Word): Word =
+    new Word:
+      override val letters = new StringProperty(this, "letters", data.letters)
+      override val position: Position = Position.fromModel(data.position)
