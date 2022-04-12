@@ -111,9 +111,9 @@ object TextPane:
       }
 
     pane.onMousePressed = event =>
-      pane.setStyle("-fx-background-color: yellow")
       val textValue = textInput.inputProperty.value
       if textValue.isBlank then {
+        pane.setStyle("-fx-background-color: yellow")
         thread = new Thread(() => {
           recorder.startRecording("/tmp/voice.wav")
         })
@@ -133,8 +133,8 @@ object TextPane:
       ()
 
     pane.onMouseReleased = event =>
-      pane.setStyle("-fx-background-color: white")
       if thread != null then {
+        pane.setStyle("-fx-background-color: white")
         recorder.stopRecording()
         thread.join()
         thread = null
