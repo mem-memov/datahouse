@@ -18,5 +18,7 @@ object ScalaFXHelloWorld extends JFXApp3 {
         content = view.Layout(self, textInput)
       }
     }
+
+
   }
 }

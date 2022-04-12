@@ -1,8 +1,11 @@
 package memmemov.datahouse.view
 
+import cats.effect.{FiberIO, IO}
+import cats.effect.std.Dispatcher
 import javafx.collections.MapChangeListener
 import memmemov.datahouse.viewModel
 import memmemov.datahouse.model
+import memmemov.datahouse.speech.Recorder
 import scalafx.beans.property.ReadOnlyDoubleProperty
 import scalafx.Includes.*
 import scalafx.scene.layout.Pane
@@ -11,6 +14,8 @@ import scalafx.scene.text.{Font, Text}
 import scalafx.event.Event
 
 import java.util.UUID
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
 
 object TextPane:
 
@@ -26,6 +31,9 @@ object TextPane:
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     var number = model.Number(1)
     var isNewFrame = true
+    var recorder: Recorder = Recorder()
+    var thread: Thread = null
+    val dispatcher = Dispatcher[IO]
 
     val pane = new Pane {
       minWidth <== container.width
@@ -100,6 +108,36 @@ object TextPane:
           loadFrameFromStory(number.decrement)
           number = number.decrement
         }
+      }
+
+    pane.onMousePressed = event =>
+      pane.setStyle("-fx-background-color: yellow")
+      val textValue = textInput.inputProperty.value
+      if textValue.isBlank then {
+        thread = new Thread(() => {
+          recorder.startRecording("/tmp/voice.wav")
+        })
+        thread.start()
+      }
+
+//      dispatcher.use { dispatcher =>
+//        for {
+//          _ <- IO(println("fiber started"))
+//          recordingFiber <- IO(recorder.startRecording("/tmp/voice.wav")).start
+//        } yield ()
+//      }
+
+      val io = IO(println("test IO"))
+      import cats.effect.unsafe.implicits.global
+      io.unsafeRunSync()
+      ()
+
+    pane.onMouseReleased = event =>
+      pane.setStyle("-fx-background-color: white")
+      if thread != null then {
+        recorder.stopRecording()
+        thread.join()
+        thread = null
       }
 
     pane
