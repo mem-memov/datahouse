@@ -1,19 +1,35 @@
 package memmemov.datahouse.view
 
+import cats.effect.IO
+import cats.effect.std.Dispatcher
 import scalafx.Includes.*
-import memmemov.datahouse.view
 import memmemov.datahouse.viewModel.TextInput
+import scalafx.beans.property.ReadOnlyDoubleProperty
 import scalafx.scene.Scene
 import scalafx.scene.layout.VBox
 
-object Layout {
-  def apply(containingScene: Scene, textInput: TextInput) = new VBox { vb =>
-    minWidth <== containingScene.width
-    minHeight <== containingScene.height
-    maxWidth <== minWidth
-    maxHeight <== minHeight
+object Layout:
 
-    val toolBar = view.ToolBar(vb, textInput)
-    children = Seq(view.TextPane(vb, toolBar.height, textInput), toolBar)
-  }
-}
+  def apply(
+    containerWidth: ReadOnlyDoubleProperty,
+    containerHeight: ReadOnlyDoubleProperty,
+    textInput: TextInput,
+    dispatcher: Dispatcher[IO]
+  ): VBox =
+
+    val newLayout = new VBox:
+      vb =>
+        minWidth <== containerWidth
+        minHeight <== containerHeight
+        maxWidth <== minWidth
+        maxHeight <== minHeight
+
+
+    val newToolBar = ToolBar(newLayout.width, textInput)
+    val newTextPane = TextPane(newLayout.width, newLayout.height, newToolBar.height, textInput, dispatcher)
+
+    newLayout.children = Seq(newTextPane, newToolBar)
+
+    newLayout
+
+

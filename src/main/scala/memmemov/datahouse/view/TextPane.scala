@@ -20,11 +20,12 @@ import scala.concurrent.ExecutionContext
 object TextPane:
 
   def apply(
-   container: Pane,
+   containerWidth: ReadOnlyDoubleProperty,
+   containerHeight: ReadOnlyDoubleProperty,
    bottomOffset: ReadOnlyDoubleProperty,
-   textInput: viewModel.TextInput
+   textInput: viewModel.TextInput,
+   dispatcher: Dispatcher[IO]
   ) =
-
     var frameViewModel = viewModel.Frame.fromModel(
       model.Frame(Map.empty[model.Number, model.Word])
     )
@@ -33,11 +34,10 @@ object TextPane:
     var isNewFrame = true
     var recorder: Recorder = Recorder()
     var thread: Thread = null
-    val dispatcher = Dispatcher[IO]
 
     val pane = new Pane {
-      minWidth <== container.width
-      minHeight <== container.height - bottomOffset
+      minWidth <== containerWidth
+      minHeight <== containerHeight - bottomOffset
       maxWidth <== minWidth
       maxHeight <== minHeight
     }
@@ -118,14 +118,11 @@ object TextPane:
           recorder.startRecording("/tmp/voice.wav")
         })
         thread.start()
-      }
 
-//      dispatcher.use { dispatcher =>
-//        for {
-//          _ <- IO(println("fiber started"))
-//          recordingFiber <- IO(recorder.startRecording("/tmp/voice.wav")).start
-//        } yield ()
-//      }
+        dispatcher.unsafeRunSync(
+          IO(println("dispatcher started"))
+        )
+      }
 
       val io = IO(println("test IO"))
       import cats.effect.unsafe.implicits.global
