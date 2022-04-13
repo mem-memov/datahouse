@@ -1,11 +1,11 @@
 package memmemov.datahouse.view
 
 import cats.effect.{FiberIO, IO}
-import cats.effect.std.Dispatcher
+import cats.effect.std.{Dispatcher, Queue}
 import javafx.collections.MapChangeListener
 import memmemov.datahouse.viewModel
 import memmemov.datahouse.model
-import memmemov.datahouse.speech.Recorder
+import memmemov.datahouse.speech.{ButtonMessage, Recorder, StartButtonMessage, StopButtonMessage}
 import scalafx.beans.property.ReadOnlyDoubleProperty
 import scalafx.Includes.*
 import scalafx.scene.layout.Pane
@@ -24,7 +24,8 @@ object TextPane:
    containerHeight: ReadOnlyDoubleProperty,
    bottomOffset: ReadOnlyDoubleProperty,
    textInput: viewModel.TextInput,
-   dispatcher: Dispatcher[IO]
+   dispatcher: Dispatcher[IO],
+   recorderQueue: Queue[IO, Option[ButtonMessage]]
   ) =
     var frameViewModel = viewModel.Frame.fromModel(
       model.Frame(Map.empty[model.Number, model.Word])
@@ -32,8 +33,6 @@ object TextPane:
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     var number = model.Number(1)
     var isNewFrame = true
-    var recorder: Recorder = Recorder()
-    var thread: Thread = null
 
     val pane = new Pane {
       minWidth <== containerWidth
@@ -114,28 +113,24 @@ object TextPane:
       val textValue = textInput.inputProperty.value
       if textValue.isBlank then {
         pane.setStyle("-fx-background-color: yellow")
-        thread = new Thread(() => {
-          recorder.startRecording("/tmp/voice.wav")
-        })
-        thread.start()
+//        thread = new Thread(() => {
+//          recorder.startRecording("/tmp/voice.wav")
+//        })
+//        thread.start()
 
-        dispatcher.unsafeRunSync(
-          IO(println("dispatcher started"))
-        )
+        dispatcher.unsafeRunSync(IO(println("button down")) >> recorderQueue.offer(Option(StartButtonMessage("/tmp/voice.wav"))))
       }
 
-      val io = IO(println("test IO"))
-      import cats.effect.unsafe.implicits.global
-      io.unsafeRunSync()
-      ()
 
     pane.onMouseReleased = event =>
-      if thread != null then {
-        pane.setStyle("-fx-background-color: white")
-        recorder.stopRecording()
-        thread.join()
-        thread = null
-      }
+//      if thread != null then {
+//        pane.setStyle("-fx-background-color: white")
+//        recorder.stopRecording()
+//        thread.join()
+//        thread = null
+//      }
+      pane.setStyle("-fx-background-color: white")
+      dispatcher.unsafeRunSync(IO(println("button up")) >> recorderQueue.offer(Option(StopButtonMessage())))
 
     pane
 

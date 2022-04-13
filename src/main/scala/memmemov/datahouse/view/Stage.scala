@@ -2,7 +2,8 @@ package memmemov.datahouse.view
 
 import scalafx.Includes.*
 import cats.effect.IO
-import cats.effect.std.Dispatcher
+import cats.effect.std.{Dispatcher, Queue}
+import memmemov.datahouse.speech.ButtonMessage
 import memmemov.datahouse.viewModel.TextInput
 import scalafx.application.JFXApp3
 
@@ -10,7 +11,8 @@ object Stage:
 
   def apply(
     textInput: TextInput,
-    dispatcher: Dispatcher[IO]
+    dispatcher: Dispatcher[IO],
+    recorderQueue: Queue[IO, Option[ButtonMessage]]
   ): JFXApp3.PrimaryStage =
 
     val newStage = new JFXApp3.PrimaryStage {
@@ -19,7 +21,7 @@ object Stage:
       height = 450
     }
 
-    val newScene = Scene(newStage.width, newStage.height, textInput, dispatcher)
+    val newScene = Scene(newStage.width, newStage.height, textInput, dispatcher, recorderQueue)
 
     newStage.scene = newScene
 
