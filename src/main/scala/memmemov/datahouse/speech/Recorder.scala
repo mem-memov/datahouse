@@ -19,7 +19,12 @@ class Recorder(
   def stopRecording(): Unit =
     line.stop()
     line.close()
-
+    import java.io.{FileInputStream, BufferedInputStream, FileOutputStream, BufferedOutputStream}
+    val bis = new BufferedInputStream(FileInputStream("/home/u/Desktop/voice.wav"))
+    val bos = new BufferedOutputStream(FileOutputStream("/home/u/Desktop/voice.wav.nh"))
+    Iterator.continually(bis.read()).takeWhile(_ != -1).drop(44).foreach(b => bos.write(b))
+    bis.close()
+    bos.close()
 
 
 object Recorder:
@@ -36,9 +41,9 @@ object Recorder:
 
   private def getAudioFormat: AudioFormat =
     val sampleRate = 16000
-    val sampleSizeInBits = 8
-    val channels = 2
+    val sampleSizeInBits = 16
+    val channels = 1
     val signed = true
-    val bigEndian = true
+    val bigEndian = false
     new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian)
 

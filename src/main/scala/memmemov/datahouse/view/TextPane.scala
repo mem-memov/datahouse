@@ -113,7 +113,7 @@ object TextPane:
       val textValue = textInput.inputProperty.value
       if textValue.isBlank then {
         pane.setStyle("-fx-background-color: yellow")
-        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage("/tmp/voice.wav"))))
+        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage("/home/u/Desktop/voice.wav"))))
       }
 
     pane.onMouseReleased = event =>
