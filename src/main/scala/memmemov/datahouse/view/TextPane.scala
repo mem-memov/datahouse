@@ -113,24 +113,12 @@ object TextPane:
       val textValue = textInput.inputProperty.value
       if textValue.isBlank then {
         pane.setStyle("-fx-background-color: yellow")
-//        thread = new Thread(() => {
-//          recorder.startRecording("/tmp/voice.wav")
-//        })
-//        thread.start()
-
-        dispatcher.unsafeRunSync(IO(println("button down")) >> recorderQueue.offer(Option(StartButtonMessage("/tmp/voice.wav"))))
+        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage("/tmp/voice.wav"))))
       }
 
-
     pane.onMouseReleased = event =>
-//      if thread != null then {
-//        pane.setStyle("-fx-background-color: white")
-//        recorder.stopRecording()
-//        thread.join()
-//        thread = null
-//      }
       pane.setStyle("-fx-background-color: white")
-      dispatcher.unsafeRunSync(IO(println("button up")) >> recorderQueue.offer(Option(StopButtonMessage())))
+      dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage())))
 
     pane
 
