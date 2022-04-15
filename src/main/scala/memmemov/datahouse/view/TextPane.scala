@@ -118,7 +118,11 @@ object TextPane:
 
     pane.onMouseReleased = event =>
       pane.setStyle("-fx-background-color: white")
-      dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage())))
+      val wordModel = model.Word.fromLettersAndCoordinates("ждите...", event.getX.toInt, event.getY.toInt)
+      val wordViewModel = viewModel.Word.fromModel(wordModel)
+      val wordDisplay = WordDisplay(wordViewModel)
+      pane.getChildren.addOne(wordDisplay)
+      dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage(wordViewModel.letters))))
 
     pane
 

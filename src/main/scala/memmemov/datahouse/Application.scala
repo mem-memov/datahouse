@@ -34,7 +34,7 @@ object Application extends IOApp.Simple:
                 Some(recordingFiber)
             }
           } yield ()
-        case StopButtonMessage() =>
+        case StopButtonMessage(letters) =>
           for {
             optionalRecordingFiber <- optionalRecordingFiberRef.get
             _ <- IO {
@@ -42,6 +42,7 @@ object Application extends IOApp.Simple:
                 case None => ()
                 case Some(recordingFiber) =>
                   recorder.stopRecording()
+                  letters.set("Яндекс")
                   recordingFiber.cancel
             }
           } yield ()
