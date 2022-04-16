@@ -21,11 +21,10 @@ object WordDisplay:
     }
 
     val rectangleItem = new Rectangle {
-      //      fill <== when(hover) choose LightGray otherwise DarkGray
       fill = LightGray
       x <== word.position.horizontal - 5
       y <== word.position.vertical - textItem.layoutBounds.value.getHeight - 5
-      width <== textItem.layoutBounds.value.getWidth + 10
+      width = textItem.layoutBounds.value.getWidth + 10
       height <== textItem.layoutBounds.value.getHeight + 10
       arcWidth = 10
       arcHeight = 10
@@ -34,6 +33,10 @@ object WordDisplay:
 
     val group = new Group {
       children = Seq(rectangleItem, textItem)
+    }
+
+    word.letters.addListener{ letters =>
+      rectangleItem.setWidth(textItem.layoutBounds.value.getWidth + 10)
     }
 
     var dragOffsetX: Double = 0

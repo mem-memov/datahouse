@@ -40,9 +40,15 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
+// refined types
+libraryDependencies ++= Seq(
+  "eu.timepit" %% "refined"                 % "0.9.28",
+  "eu.timepit" %% "refined-cats"            % "0.9.28", // optional
+)
+
 // config library
 libraryDependencies += "is.cir" %% "ciris" % "2.3.2"
-libraryDependencies += "is.cir" %% "ciris-circe-yaml" % "2.3.2"
+libraryDependencies += "is.cir" %% "ciris-refined" % "2.3.2"
 
 // IO library
 libraryDependencies += "org.typelevel" %% "cats-effect" % "3.3.9"
@@ -50,6 +56,7 @@ libraryDependencies += "org.typelevel" %% "cats-effect" % "3.3.9"
 // HTTP library
 val Http4sVersion = "1.0.0-M31"
 libraryDependencies += "org.http4s" %% "http4s-ember-server" % Http4sVersion
+libraryDependencies += "org.http4s" %% "http4s-ember-client" % Http4sVersion
 libraryDependencies += "org.http4s" %% "http4s-dsl" % Http4sVersion
 
 // Stream library

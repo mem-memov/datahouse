@@ -4,7 +4,12 @@ import cats.effect.{Fiber, IO, IOApp, Ref}
 import cats.effect.std.{Dispatcher, Queue}
 import fs2.Stream
 import javafx.application.Platform
-import memmemov.datahouse.speech.{ButtonMessage, Recorder, StartButtonMessage, StopButtonMessage}
+import memmemov.datahouse.configuration.Loader
+import memmemov.datahouse.speech.{ButtonMessage, RecognitionFailed, Recorder, StartButtonMessage, StopButtonMessage, VoiceRecognized, YandexClient, YandexResponse}
+import io.circe.*
+import io.circe.generic.auto.*
+import io.circe.parser.*
+import io.circe.syntax.*
 
 object Application extends IOApp.Simple:
   override def run: IO[Unit] =
@@ -12,14 +17,15 @@ object Application extends IOApp.Simple:
 
     Dispatcher[IO].use { dispatcher =>
       for {
+        config <- Loader.load[IO]
         recorderQueue <- Queue.unbounded[IO, Option[ButtonMessage]]
         recorderStream <- IO(Stream.fromQueueNoneTerminated(recorderQueue))
-        - <- handleRecorderButtons(recorderStream, recorder)
+        - <- handleRecorderButtons(recorderStream, recorder, config.speechRecognition)
         _ <- IO {UserInterface(dispatcher, recorderQueue).main(Array.empty[String])}
       } yield ()
     }
 
-  private def handleRecorderButtons(recorderStream: Stream[IO, ButtonMessage], recorder: Recorder) =
+  private def handleRecorderButtons(recorderStream: Stream[IO, ButtonMessage], recorder: Recorder, config: configuration.SpeechRecognition) =
     for {
       optionalRecordingFiberRef: Ref[IO, Option[Fiber[IO, Throwable, Unit]]] <- Ref[IO].of(Option.empty[Fiber[IO, Throwable, Unit]])
       _ <- recorderStream.evalMap{
@@ -42,8 +48,14 @@ object Application extends IOApp.Simple:
                 case None => ()
                 case Some(recordingFiber) =>
                   recorder.stopRecording()
-                  letters.set("Яндекс")
                   recordingFiber.cancel
+            }
+            resultText <- YandexClient.putRequest(config.folderId, config.token)
+            _ <- IO {
+              decode[YandexResponse](resultText) match
+                case Left(_) => letters.set("aй")
+                case Right(VoiceRecognized(result)) => letters.set(result)
+                case Right(RecognitionFailed(errorCode, errorMessage)) => letters.set("ой")
             }
           } yield ()
       }.compile.drain.start
