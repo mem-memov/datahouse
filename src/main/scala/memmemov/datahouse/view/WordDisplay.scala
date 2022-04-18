@@ -43,11 +43,16 @@ object WordDisplay:
     var dragOffsetY: Double = 0
 
     group.onMousePressed = mouseEvent =>
+      mouseEvent.consume()
       dragOffsetX = mouseEvent.getX - word.position.horizontal.value
       dragOffsetY = mouseEvent.getY - word.position.vertical.value
 
     group.onMouseDragged = mouseEvent =>
+      mouseEvent.consume()
       word.position.horizontal.value = mouseEvent.getX - dragOffsetX
       word.position.vertical.value = mouseEvent.getY - dragOffsetY
+
+    group.onMouseReleased = mouseEvent =>
+      mouseEvent.consume()
 
     group
