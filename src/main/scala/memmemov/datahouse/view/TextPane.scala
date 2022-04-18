@@ -27,19 +27,21 @@ object TextPane:
    dispatcher: Dispatcher[IO],
    recorderQueue: Queue[IO, Option[ButtonMessage]]
   ) =
-    var frameViewModel = viewModel.Frame.fromModel(
+    val frameViewModel = viewModel.Frame.fromModel(
       model.Frame(Map.empty[model.Number, model.Word])
     )
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     var number = model.Number(1)
-    var isNewFrame = true
 
     val pane = new Pane {
+      style = "-fx-background-color: black"
       minWidth <== containerWidth
       minHeight <== containerHeight - bottomOffset
       maxWidth <== minWidth
       maxHeight <== minHeight
     }
+
+    val paneCenter = viewModel.PaneCenter(pane.width, pane.height)
 
 //    var subscription =
     frameViewModel.words.onChange {
@@ -73,6 +75,7 @@ object TextPane:
       val textValue = textInput.inputProperty.value
 
       if textValue.nonEmpty then
+        event.consume()
         textInput.inputProperty.value = ""
 
         val wordModel = model.Word.fromLettersAndCoordinates(textValue, event.getX.toInt, event.getY.toInt)
@@ -112,15 +115,20 @@ object TextPane:
     pane.onMousePressed = event =>
       val textValue = textInput.inputProperty.value
       if textValue.isBlank then {
-        pane.setStyle("-fx-background-color: yellow")
+        event.consume()
+        pane.setStyle("-fx-background-color: dark-grey")
         dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage("/home/u/Desktop/voice.wav"))))
       }
 
     pane.onMouseReleased = event =>
-      pane.setStyle("-fx-background-color: white")
-      val wordModel = model.Word.fromLettersAndCoordinates("ждите...", event.getX.toInt, event.getY.toInt)
-      val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
-      dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage(wordViewModel.letters))))
+      val textValue = textInput.inputProperty.value
+      if textValue.isBlank then {
+        event.consume()
+        pane.setStyle("-fx-background-color: black")
+        val wordModel = model.Word.fromLettersAndCoordinates("ждите...", event.getX.toInt, event.getY.toInt)
+        val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
+        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage(wordViewModel.letters))))
+      }
 
     pane
 

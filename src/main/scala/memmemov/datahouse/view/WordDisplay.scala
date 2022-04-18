@@ -1,9 +1,9 @@
 package memmemov.datahouse.view
 
 import memmemov.datahouse.viewModel
-import scalafx.Includes._
+import scalafx.Includes.*
 import scalafx.scene.Group
-import scalafx.scene.paint.Color.{Black, DarkGray, Gray, LightGray, color}
+import scalafx.scene.paint.Color.{Black, DarkGray, Gray, LightGray, White, color}
 import scalafx.scene.text.{Font, Text}
 import scalafx.scene.shape.Rectangle
 import scalafx.scene.control.Label
@@ -15,13 +15,13 @@ object WordDisplay:
       text <== word.letters
       x <== word.position.horizontal
       y <== word.position.vertical
-      stroke = Gray
+      stroke = White
       font = new Font("Arial", 20)
-      fill = Black
+      fill = White
     }
 
     val rectangleItem = new Rectangle {
-      fill = LightGray
+      fill = Black
       x <== word.position.horizontal - 5
       y <== word.position.vertical - textItem.layoutBounds.value.getHeight - 5
       width = textItem.layoutBounds.value.getWidth + 10
