@@ -5,19 +5,45 @@ import memmemov.datahouse.model
 
 trait Position:
 
-  val horizontal:DoubleProperty
-  val vertical: DoubleProperty
+  val paneCenter: PaneCenter
+
+  val centerHorizontal: DoubleProperty
+  val centerVertical: DoubleProperty
+
+  val cornerHorizontal: DoubleProperty
+  val cornerVertical: DoubleProperty
+
+  def moveToCornerHorizontal(cornerHorizontal: Double): Unit =
+    centerHorizontal.value = cornerHorizontal - paneCenter.leftOffsetProperty.value
+
+  def moveToCornerVertical(cornerVertical: Double): Unit =
+    centerVertical.value = paneCenter.topOffsetProperty.value - cornerVertical
 
   def toModel: model.Position =
     model.Position(
-      model.Coordinate(horizontal.value.toInt),
-      model.Coordinate(vertical.value.toInt)
+      model.Coordinate(centerHorizontal.value.toInt),
+      model.Coordinate(centerVertical.value.toInt)
     )
 
 object Position:
 
-  def fromModel(data: model.Position): Position =
+  def fromModel(data: model.Position, center: PaneCenter): Position =
+
+    val centerHorizontal_v: DoubleProperty = new DoubleProperty(this, "centerHorizontal", data.horizontal.value.toDouble)
+    val centerVertical_v: DoubleProperty = new DoubleProperty(this, "centerVertical", data.vertical.value.toDouble)
+
+    val cornerHorizontal_v: DoubleProperty = new DoubleProperty(this, "cornerHorizontal", center.fromHorizontalCenter(data.horizontal.value.toDouble))
+    val cornerVertical_v: DoubleProperty = new DoubleProperty(this, "cornerVertical", center.fromVerticalCenter(data.vertical.value.toDouble))
+
+    cornerHorizontal_v <== center.leftOffsetProperty + centerHorizontal_v
+    cornerVertical_v <== center.topOffsetProperty - centerVertical_v
+
     new Position:
-      override val horizontal: DoubleProperty = new DoubleProperty(this, "horizontal", data.horizontal.value.toDouble)
-      override val vertical: DoubleProperty = new DoubleProperty(this, "vertical", data.vertical.value.toDouble)
+      override val paneCenter: PaneCenter = center
+
+      override val centerHorizontal: DoubleProperty = centerHorizontal_v
+      override val centerVertical: DoubleProperty = centerVertical_v
+
+      override val cornerHorizontal: DoubleProperty = cornerHorizontal_v
+      override val cornerVertical: DoubleProperty = cornerVertical_v
 

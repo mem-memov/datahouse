@@ -16,7 +16,7 @@ trait Word:
 
 object Word:
 
-  def fromModel(data: model.Word): Word =
+  def fromModel(data: model.Word, center: PaneCenter): Word =
     new Word:
       override val letters = new StringProperty(this, "letters", data.letters)
-      override val position: Position = Position.fromModel(data.position)
+      override val position: Position = Position.fromModel(data.position, center)

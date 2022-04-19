@@ -27,9 +27,7 @@ object TextPane:
    dispatcher: Dispatcher[IO],
    recorderQueue: Queue[IO, Option[ButtonMessage]]
   ) =
-    val frameViewModel = viewModel.Frame.fromModel(
-      model.Frame(Map.empty[model.Number, model.Word])
-    )
+
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     var number = model.Number(1)
 
@@ -41,7 +39,12 @@ object TextPane:
       maxHeight <== minHeight
     }
 
-    val paneCenter = viewModel.PaneCenter(pane.width, pane.height)
+    val paneCenterViewModel = viewModel.PaneCenter(pane.width, pane.height)
+
+    val frameViewModel = viewModel.Frame.fromModel(
+      model.Frame(Map.empty[model.Number, model.Word]),
+      paneCenterViewModel
+    )
 
 //    var subscription =
     frameViewModel.words.onChange {
@@ -78,7 +81,11 @@ object TextPane:
         event.consume()
         textInput.inputProperty.value = ""
 
-        val wordModel = model.Word.fromLettersAndCoordinates(textValue, event.getX.toInt, event.getY.toInt)
+        val wordModel = model.Word.fromLettersAndCoordinates(
+          textValue,
+          paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+          paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+        )
         val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
 
 
@@ -125,7 +132,11 @@ object TextPane:
       if textValue.isBlank then {
         event.consume()
         pane.setStyle("-fx-background-color: black")
-        val wordModel = model.Word.fromLettersAndCoordinates("ждите...", event.getX.toInt, event.getY.toInt)
+        val wordModel = model.Word.fromLettersAndCoordinates(
+          "ждите...",
+          paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+          paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+        )
         val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
         dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage(wordViewModel.letters))))
       }

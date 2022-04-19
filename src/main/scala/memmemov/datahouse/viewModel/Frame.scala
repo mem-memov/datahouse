@@ -7,11 +7,12 @@ import scalafx.collections.ObservableMap
 
 trait Frame:
 
+  val paneCenter: PaneCenter
   val words: MapProperty[model.Number, Word]
 
   def addWord(wordModel: model.Word): (model.Number, Word) =
     val newNumber = maxKey.map(_.increment).getOrElse(model.Number(1))
-    val newWord = Word.fromModel(wordModel)
+    val newWord = Word.fromModel(wordModel, paneCenter: PaneCenter)
     words.put(newNumber, newWord)
     (newNumber, newWord)
 
@@ -33,10 +34,11 @@ trait Frame:
 
 object Frame:
 
-  def fromModel(data: model.Frame): Frame =
+  def fromModel(data: model.Frame, center: PaneCenter): Frame =
     val mapWithWords = data.words.map { (numberModel, wordModel) =>
-      (numberModel, Word.fromModel(wordModel))
+      (numberModel, Word.fromModel(wordModel, center))
     }
     val observableMap = ObservableMap.from(mapWithWords)
     new Frame:
+      override val paneCenter: PaneCenter = center
       override val words: MapProperty[model.Number, Word] = MapProperty(this, "words", observableMap)

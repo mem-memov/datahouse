@@ -13,8 +13,8 @@ object WordDisplay:
 
     val textItem = new Text {
       text <== word.letters
-      x <== word.position.horizontal
-      y <== word.position.vertical
+      x <== word.position.cornerHorizontal
+      y <== word.position.cornerVertical
       stroke = White
       font = new Font("Arial", 20)
       fill = White
@@ -22,8 +22,8 @@ object WordDisplay:
 
     val rectangleItem = new Rectangle {
       fill = Black
-      x <== word.position.horizontal - 5
-      y <== word.position.vertical - textItem.layoutBounds.value.getHeight - 5
+      x <== word.position.cornerHorizontal - 5
+      y <== word.position.cornerVertical - textItem.layoutBounds.value.getHeight - 5
       width = textItem.layoutBounds.value.getWidth + 10
       height <== textItem.layoutBounds.value.getHeight + 10
       arcWidth = 10
@@ -44,13 +44,13 @@ object WordDisplay:
 
     group.onMousePressed = mouseEvent =>
       mouseEvent.consume()
-      dragOffsetX = mouseEvent.getX - word.position.horizontal.value
-      dragOffsetY = mouseEvent.getY - word.position.vertical.value
+      dragOffsetX = mouseEvent.getX - word.position.cornerHorizontal.value
+      dragOffsetY = mouseEvent.getY - word.position.cornerVertical.value
 
     group.onMouseDragged = mouseEvent =>
       mouseEvent.consume()
-      word.position.horizontal.value = mouseEvent.getX - dragOffsetX
-      word.position.vertical.value = mouseEvent.getY - dragOffsetY
+      word.position.moveToCornerHorizontal(mouseEvent.getX - dragOffsetX)
+      word.position.moveToCornerVertical(mouseEvent.getY - dragOffsetY)
 
     group.onMouseReleased = mouseEvent =>
       mouseEvent.consume()

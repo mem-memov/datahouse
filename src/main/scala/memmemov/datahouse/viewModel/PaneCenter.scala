@@ -8,11 +8,16 @@ class PaneCenter(
   private val heightProperty: ReadOnlyDoubleProperty
 ):
   self =>
-    val topOffsetProperty =  new DoubleProperty(self, "xProperty", 0)
-    val leftOffsetProperty =  new DoubleProperty(self, "yProperty", 0)
-    topOffsetProperty <== widthProperty / 2
-    leftOffsetProperty <== heightProperty / 2
-    topOffsetProperty.addListener(value => println(s"top offset: $value"))
+    val topOffsetProperty =  new DoubleProperty(self, "topOffsetProperty", 0)
+    val leftOffsetProperty =  new DoubleProperty(self, "leftOffsetProperty", 0)
+    topOffsetProperty <== heightProperty / 2
+    leftOffsetProperty <== widthProperty / 2
+
+    def fromVerticalCenter(centerVertical: Double): Double = topOffsetProperty.value - centerVertical
+    def fromHorizontalCenter(centerHorizontal: Double): Double = leftOffsetProperty.value + centerHorizontal
+
+    def fromVerticalCorner(cornerVertical: Double): Double = topOffsetProperty.value - cornerVertical
+    def fromHorizontalCorner(cornerHorizontal: Double): Double = cornerHorizontal - leftOffsetProperty.value
 
 object PaneCenter:
   def apply(widthProperty: ReadOnlyDoubleProperty, heightProperty: ReadOnlyDoubleProperty) =
