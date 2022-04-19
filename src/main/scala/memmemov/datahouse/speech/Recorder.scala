@@ -8,7 +8,10 @@ class Recorder(
   private val line: TargetDataLine,
   private val format: AudioFormat
 ):
+  var recordedFilePath: String = ""
+
   def startRecording(filePath: String): Unit =
+    recordedFilePath = filePath
     val file = new File(filePath)
     val fileType: AudioFileFormat.Type = AudioFileFormat.Type.WAVE
     line.open(format)
@@ -20,12 +23,12 @@ class Recorder(
     line.stop()
     line.close()
     import java.io.{FileInputStream, BufferedInputStream, FileOutputStream, BufferedOutputStream}
-    val bis = new BufferedInputStream(FileInputStream("/home/u/Desktop/voice.wav"))
-    val bos = new BufferedOutputStream(FileOutputStream("/home/u/Desktop/voice.wav.nh"))
+    val bis = new BufferedInputStream(FileInputStream(recordedFilePath))
+    val bos = new BufferedOutputStream(FileOutputStream(recordedFilePath + ".nh"))
     Iterator.continually(bis.read()).takeWhile(_ != -1).drop(44).foreach(b => bos.write(b))
     bis.close()
     bos.close()
-
+//    recordedFilePath = ""
 
 object Recorder:
 

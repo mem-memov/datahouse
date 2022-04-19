@@ -9,13 +9,15 @@ import eu.timepit.refined.cats._
 import cats.implicits._
 
 object Loader:
-  def load[F[_] : Async]: F[Application] =
+  def load[F[_] : Async](storageDirectory: String): F[Application] =
     default[F](
-      YandexSpeechKitUri("https://stt.api.cloud.yandex.net/speech/v1/stt:recognize")
+      YandexSpeechKitUri("https://stt.api.cloud.yandex.net/speech/v1/stt:recognize"),
+      StorageDirectory(storageDirectory)
     ).load[F]
 
   private def default[F[_]](
-    yandexSpeechKitUri: YandexSpeechKitUri
+    yandexSpeechKitUri: YandexSpeechKitUri,
+    storageDirectory: StorageDirectory
   ): ConfigValue[F, Application] =
     (
       env("YANDEX_TOKEN").as[NonEmptyString].map(YandexToken(_)),
@@ -23,7 +25,8 @@ object Loader:
     ).parMapN {
       (yandexToken, yandexFolderId) =>
         Application(
-          SpeechRecognition(yandexToken, yandexFolderId, yandexSpeechKitUri)
+          SpeechRecognition(yandexToken, yandexFolderId, yandexSpeechKitUri),
+          storageDirectory
         )
     }
 

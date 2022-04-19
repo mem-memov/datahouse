@@ -3,6 +3,7 @@ package memmemov.datahouse.view
 import cats.effect.{FiberIO, IO}
 import cats.effect.std.{Dispatcher, Queue}
 import javafx.collections.MapChangeListener
+import memmemov.datahouse.configuration.StorageDirectory
 import memmemov.datahouse.viewModel
 import memmemov.datahouse.model
 import memmemov.datahouse.speech.{ButtonMessage, Recorder, StartButtonMessage, StopButtonMessage}
@@ -25,7 +26,8 @@ object TextPane:
    bottomOffset: ReadOnlyDoubleProperty,
    textInput: viewModel.TextInput,
    dispatcher: Dispatcher[IO],
-   recorderQueue: Queue[IO, Option[ButtonMessage]]
+   recorderQueue: Queue[IO, Option[ButtonMessage]],
+   storageDirectory: StorageDirectory
   ) =
 
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
@@ -124,7 +126,8 @@ object TextPane:
       if textValue.isBlank then {
         event.consume()
         pane.setStyle("-fx-background-color: dark-grey")
-        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage("/home/u/Desktop/voice.wav"))))
+        val filePath = s"${storageDirectory.value}/${UUID.randomUUID()}.wav"
+        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage(filePath))))
       }
 
     pane.onMouseReleased = event =>

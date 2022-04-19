@@ -11,7 +11,7 @@ import fs2.io.file.{Files, Path}
 import memmemov.datahouse.configuration.{YandexFolderId, YandexToken}
 
 object YandexClient {
-  def putRequest(folderId: YandexFolderId, token: YandexToken) =
+  def putRequest(folderId: YandexFolderId, token: YandexToken, filePath: String) =
 
     val request: Request[IO] = Request[IO](
       Method.POST,
@@ -22,7 +22,7 @@ object YandexClient {
         ("Accept-Charset" -> "utf-8"),
         ("Authorization" -> s"Bearer ${token.value}")
       )),
-      Entity[IO](Files[IO].readAll(Path("/home/u/Desktop/voice.wav.nh")))
+      Entity[IO](Files[IO].readAll(Path(filePath)))
     )
 
     EmberClientBuilder.default[IO].build.use { client =>

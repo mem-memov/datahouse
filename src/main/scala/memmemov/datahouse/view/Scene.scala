@@ -3,6 +3,7 @@ package memmemov.datahouse.view
 import scalafx.Includes.*
 import cats.effect.IO
 import cats.effect.std.{Dispatcher, Queue}
+import memmemov.datahouse.configuration.StorageDirectory
 import memmemov.datahouse.speech.ButtonMessage
 import memmemov.datahouse.view
 import memmemov.datahouse.viewModel.TextInput
@@ -16,12 +17,13 @@ object Scene:
     containerHeight: ReadOnlyDoubleProperty,
     textInput: TextInput,
     dispatcher: Dispatcher[IO],
-    recorderQueue: Queue[IO, Option[ButtonMessage]]
+    recorderQueue: Queue[IO, Option[ButtonMessage]],
+    storageDirectory: StorageDirectory
   ): Scene =
 
     val newScene = new Scene {}
 
-    val newLayout = Layout(newScene.width, newScene.height, textInput, dispatcher, recorderQueue)
+    val newLayout = Layout(newScene.width, newScene.height, textInput, dispatcher, recorderQueue, storageDirectory)
 
     newScene.content = newLayout
 

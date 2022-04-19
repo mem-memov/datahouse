@@ -6,14 +6,16 @@ import scalafx.Includes.*
 import scalafx.application.JFXApp3
 import scalafx.scene.Scene
 import javafx.application.Platform
+import memmemov.datahouse.configuration.StorageDirectory
 import memmemov.datahouse.speech.ButtonMessage
 
 object UserInterface:
 
   def apply(
     dispatcher: Dispatcher[IO],
-    recorderQueue: Queue[IO, Option[ButtonMessage]]
+    recorderQueue: Queue[IO, Option[ButtonMessage]],
+    storageDirectory: StorageDirectory
   ): JFXApp3 =
     val textInput = viewModel.TextInput("")
-    val newUserInterface = view.Application(textInput, dispatcher, recorderQueue)
+    val newUserInterface = view.Application(textInput, dispatcher, recorderQueue, storageDirectory)
     newUserInterface

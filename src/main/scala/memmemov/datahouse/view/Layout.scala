@@ -2,6 +2,7 @@ package memmemov.datahouse.view
 
 import cats.effect.IO
 import cats.effect.std.{Dispatcher, Queue}
+import memmemov.datahouse.configuration.StorageDirectory
 import memmemov.datahouse.speech.ButtonMessage
 import scalafx.Includes.*
 import memmemov.datahouse.viewModel.TextInput
@@ -16,7 +17,8 @@ object Layout:
     containerHeight: ReadOnlyDoubleProperty,
     textInput: TextInput,
     dispatcher: Dispatcher[IO],
-    recorderQueue: Queue[IO, Option[ButtonMessage]]
+    recorderQueue: Queue[IO, Option[ButtonMessage]],
+    storageDirectory: StorageDirectory
   ): VBox =
 
     val newLayout = new VBox:
@@ -28,7 +30,7 @@ object Layout:
 
 
     val newToolBar = ToolBar(newLayout.width, textInput)
-    val newTextPane = TextPane(newLayout.width, newLayout.height, newToolBar.height, textInput, dispatcher, recorderQueue)
+    val newTextPane = TextPane(newLayout.width, newLayout.height, newToolBar.height, textInput, dispatcher, recorderQueue, storageDirectory)
 
     newLayout.children = Seq(newTextPane, newToolBar)
 
