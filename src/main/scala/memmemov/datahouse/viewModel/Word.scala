@@ -2,6 +2,7 @@ package memmemov.datahouse.viewModel
 
 import scalafx.beans.property.StringProperty
 import memmemov.datahouse.model
+import memmemov.datahouse.model.{BackwardWordReference, ForwardWordReference}
 
 trait Word:
 
@@ -11,7 +12,9 @@ trait Word:
   def toModel: model.Word =
     model.Word(
       letters.value,
-      position.toModel
+      position.toModel,
+      List.empty[ForwardWordReference],
+      List.empty[BackwardWordReference]
     )
 
 object Word:

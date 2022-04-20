@@ -1,6 +1,6 @@
 package memmemov.datahouse.view
 
-import memmemov.datahouse.viewModel
+import memmemov.datahouse.{model, viewModel}
 import scalafx.Includes.*
 import scalafx.scene.Group
 import scalafx.scene.paint.Color.{Black, DarkGray, Gray, LightGray, White, color}
@@ -9,6 +9,7 @@ import scalafx.scene.shape.Rectangle
 import scalafx.scene.control.Label
 
 object WordDisplay:
+
   def apply(word: viewModel.Word) =
 
     val textItem = new Text {

@@ -52,16 +52,34 @@ object TextPane:
     frameViewModel.words.onChange {
       pane.children.clear()
       frameViewModel.words.value.map { (numberModel, wordViewModel) =>
-        pane.getChildren.addOne(
-          WordDisplay(wordViewModel)
-        )
+        val wordDisplay = WordDisplay(wordViewModel)
+        wordDisplay.onMouseClicked = event =>
+          val textValue = textInput.inputProperty.value
+          if textValue.nonEmpty then {
+            event.consume()
+            textInput.inputProperty.value = ""
+            updateStoryFrame(number)
+            frameViewModel.words.clear()
+            number = storyModel.maxKey match
+              case None => model.Number(1)
+              case Some(n) => n.increment
+            val newWordModel = model.Word.fromLettersAndCoordinates(
+              textValue,
+              paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+              paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+            )
+            val (newNumberModel, newWordViewModel) = frameViewModel.addWord(newWordModel)
+          }
+        pane.getChildren.addOne(wordDisplay)
       }
     }
 
     def appendCurrentFrameToStory(n: model.Number) =
-      val frameModel = frameViewModel.toModel
-      val newFrames = storyModel.frames.updated(number, frameModel)
-      storyModel = storyModel.copy(frames = newFrames)
+      if frameViewModel.words.value.nonEmpty then {
+        val frameModel = frameViewModel.toModel
+        val newFrames = storyModel.frames.updated(number, frameModel)
+        storyModel = storyModel.copy(frames = newFrames)
+      }
 
     def loadFrameFromStory(n: model.Number) =
       val frameModel = storyModel.frames(n)
@@ -71,9 +89,11 @@ object TextPane:
       }
 
     def updateStoryFrame(n: model.Number) =
-      val frameModel = frameViewModel.toModel
-      val newFrames = storyModel.frames.updated(number, frameModel)
-      storyModel = storyModel.copy(frames = newFrames)
+      if frameViewModel.words.value.nonEmpty then {
+        val frameModel = frameViewModel.toModel
+        val newFrames = storyModel.frames.updated(number, frameModel)
+        storyModel = storyModel.copy(frames = newFrames)
+      }
 
     pane.onMouseClicked = event =>
 
@@ -89,6 +109,7 @@ object TextPane:
           paneCenterViewModel.fromVerticalCorner(event.getY).toInt
         )
         val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
+        updateStoryFrame(number)
 
 
     pane.onScroll = event =>
