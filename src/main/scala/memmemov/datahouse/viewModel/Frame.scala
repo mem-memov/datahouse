@@ -9,6 +9,7 @@ trait Frame:
 
   val paneCenter: PaneCenter
   val words: MapProperty[model.Number, Word]
+  
 
   def addWord(wordModel: model.Word): (model.Number, Word) =
     val newNumber = maxKey.map(_.increment).getOrElse(model.Number(1))
@@ -31,6 +32,25 @@ trait Frame:
         case None => Some(key)
         case Some(k) => if key.value > k.value then Some(key) else Some(k)
     }
+
+  def updateStory(numberModel: model.Number, storyModel: model.Story): model.Story =
+    if words.value.nonEmpty then 
+      val newFrames = storyModel.frames.updated(numberModel, toModel)
+      storyModel.copy(frames = newFrames)
+    else
+      storyModel
+
+  def appendToStory(numberModel: model.Number, storyModel: model.Story): model.Story =
+    if words.value.nonEmpty then 
+      val newFrames = storyModel.frames.updated(numberModel, toModel)
+      storyModel.copy(frames = newFrames)
+    else
+      storyModel
+
+  def loadFrameFromStory(numberModel: model.Number, storyModel: model.Story): Unit =
+    val frameModel = storyModel.frames(numberModel)
+    words.clear()
+    frameModel.words.foreach { (number, word) => addWord(word) }
 
 object Frame:
 

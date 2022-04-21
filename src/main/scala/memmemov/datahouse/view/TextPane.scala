@@ -30,6 +30,7 @@ object TextPane:
    storageDirectory: StorageDirectory
   ) =
 
+
     var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     var number = model.Number(1)
 
@@ -48,6 +49,8 @@ object TextPane:
       paneCenterViewModel
     )
 
+    var storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel)
+
 //    var subscription =
     frameViewModel.words.onChange {
       pane.children.clear()
@@ -58,89 +61,36 @@ object TextPane:
           if textValue.nonEmpty then {
             event.consume()
             textInput.inputProperty.value = ""
-            updateStoryFrame(number)
-            frameViewModel.words.clear()
-            number = storyModel.maxKey match
-              case None => model.Number(1)
-              case Some(n) => n.increment
             val newWordModel = model.Word.fromLettersAndCoordinates(
               textValue,
               paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
               paneCenterViewModel.fromVerticalCorner(event.getY).toInt
             )
-            val (newNumberModel, newWordViewModel) = frameViewModel.addWord(newWordModel)
+            storyViewModel = storyViewModel.startNewFrameWithWord(newWordModel)
           }
         pane.getChildren.addOne(wordDisplay)
       }
     }
 
-    def appendCurrentFrameToStory(n: model.Number) =
-      if frameViewModel.words.value.nonEmpty then {
-        val frameModel = frameViewModel.toModel
-        val newFrames = storyModel.frames.updated(number, frameModel)
-        storyModel = storyModel.copy(frames = newFrames)
-      }
-
-    def loadFrameFromStory(n: model.Number) =
-      val frameModel = storyModel.frames(n)
-      frameViewModel.words.clear()
-      frameModel.words.foreach { (number, word) =>
-        frameViewModel.addWord(word)
-      }
-
-    def updateStoryFrame(n: model.Number) =
-      if frameViewModel.words.value.nonEmpty then {
-        val frameModel = frameViewModel.toModel
-        val newFrames = storyModel.frames.updated(number, frameModel)
-        storyModel = storyModel.copy(frames = newFrames)
-      }
-
     pane.onMouseClicked = event =>
-
       val textValue = textInput.inputProperty.value
-
       if textValue.nonEmpty then
         event.consume()
         textInput.inputProperty.value = ""
-
         val wordModel = model.Word.fromLettersAndCoordinates(
           textValue,
           paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
           paneCenterViewModel.fromVerticalCorner(event.getY).toInt
         )
-        val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
-        updateStoryFrame(number)
-
+        storyViewModel = storyViewModel.addWordToCurrentFrame(wordModel)
 
     pane.onScroll = event =>
-
       val isForward = event.getDeltaY > 0
       val isBackward = event.getDeltaY < 0
-
-      if isForward then {
-        if storyModel.hasNumber(number.increment) then {
-          updateStoryFrame(number)
-          loadFrameFromStory(number.increment)
-          number = number.increment
-        } else {
-          if frameViewModel.nonEmpty then {
-            appendCurrentFrameToStory(number)
-            frameViewModel.words.clear()
-            number = number.increment
-          }
-        }
-      }
-
-      if isBackward then {
-        if !storyModel.hasNumber(number.increment) then {
-          appendCurrentFrameToStory(number)
-        }
-        if storyModel.hasNumber(number.decrement) then {
-          updateStoryFrame(number)
-          loadFrameFromStory(number.decrement)
-          number = number.decrement
-        }
-      }
+      if isForward then
+        storyViewModel = storyViewModel.toNextFrame
+      if isBackward then
+        storyViewModel = storyViewModel.toPreviousFrame
 
     pane.onMousePressed = event =>
       val textValue = textInput.inputProperty.value
@@ -153,7 +103,7 @@ object TextPane:
 
     pane.onMouseReleased = event =>
       val textValue = textInput.inputProperty.value
-      if textValue.isBlank then {
+      if textValue.isBlank then
         event.consume()
         pane.setStyle("-fx-background-color: black")
         val wordModel = model.Word.fromLettersAndCoordinates(
@@ -161,9 +111,13 @@ object TextPane:
           paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
           paneCenterViewModel.fromVerticalCorner(event.getY).toInt
         )
-        val (numberModel, wordViewModel) = frameViewModel.addWord(wordModel)
-        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StopButtonMessage(wordViewModel.letters))))
-      }
+        storyViewModel = storyViewModel.addWordToCurrentFrameAndUseLetters(wordModel) { letters =>
+          dispatcher.unsafeRunSync(
+            recorderQueue.offer(
+              Option(StopButtonMessage(letters))
+            )
+          )
+        }
 
     pane
 
