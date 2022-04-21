@@ -31,8 +31,8 @@ object TextPane:
   ) =
 
 
-    var storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
-    var number = model.Number(1)
+    val storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
+    val number = model.Number(1)
 
     val pane = new Pane {
       style = "-fx-background-color: black"
@@ -56,6 +56,7 @@ object TextPane:
       pane.children.clear()
       frameViewModel.words.value.map { (numberModel, wordViewModel) =>
         val wordDisplay = WordDisplay(wordViewModel)
+
         wordDisplay.onMouseClicked = event =>
           val textValue = textInput.inputProperty.value
           if textValue.nonEmpty then {
@@ -68,6 +69,34 @@ object TextPane:
             )
             storyViewModel = storyViewModel.startNewFrameWithWord(newWordModel)
           }
+
+        wordDisplay.onMousePressed = event =>
+          val textValue = textInput.inputProperty.value
+          if textValue.isBlank then {
+            event.consume()
+            pane.setStyle("-fx-background-color: dark-grey")
+            val filePath = s"${storageDirectory.value}/${UUID.randomUUID()}.wav"
+            dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage(filePath))))
+          }
+
+        wordDisplay.onMouseReleased = event =>
+          val textValue = textInput.inputProperty.value
+          if textValue.isBlank then
+            event.consume()
+            pane.setStyle("-fx-background-color: black")
+            val wordModel = model.Word.fromLettersAndCoordinates(
+              "ждите...",
+              paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+              paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+            )
+            storyViewModel = storyViewModel.startNewFrameWithWordAndUseLetters(wordModel) { letters =>
+              dispatcher.unsafeRunSync(
+                recorderQueue.offer(
+                  Option(StopButtonMessage(letters))
+                )
+              )
+            }
+
         pane.getChildren.addOne(wordDisplay)
       }
     }

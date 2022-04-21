@@ -14,12 +14,16 @@ trait Story:
     def toModel: model.Story = storyModel
 
     def startNewFrameWithWord(wordModel: model.Word): Story =
+      startNewFrameWithWordAndUseLetters(wordModel)(_ => ())
+      
+    def startNewFrameWithWordAndUseLetters(wordModel: model.Word)(useLetters: StringProperty => Unit): Story =
       val newStoryModel = frame.updateStory(numberModel, storyModel)
       frame.words.clear()
       val newNumberModel = storyModel.maxKey match
         case None => model.Number(1)
         case Some(n) => n.increment
       val (numberM, wordVM) = frame.addWord(wordModel)
+      useLetters(wordVM.letters)
       new Story {
         override val numberModel: model.Number = newNumberModel
         override val storyModel: model.Story = newStoryModel

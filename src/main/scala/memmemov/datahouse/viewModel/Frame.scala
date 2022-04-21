@@ -9,7 +9,6 @@ trait Frame:
 
   val paneCenter: PaneCenter
   val words: MapProperty[model.Number, Word]
-  
 
   def addWord(wordModel: model.Word): (model.Number, Word) =
     val newNumber = maxKey.map(_.increment).getOrElse(model.Number(1))
