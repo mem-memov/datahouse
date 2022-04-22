@@ -32,7 +32,7 @@ object Layout:
     val newToolBar = ToolBar(newLayout.width, textInput)
     val newTextPane = TextPane(newLayout.width, newLayout.height, newToolBar.height, textInput, dispatcher, recorderQueue, storageDirectory)
 
-    newLayout.children = Seq(newTextPane, newToolBar)
+    newLayout.children = Seq(newTextPane.view, newToolBar)
 
     newLayout
 

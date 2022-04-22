@@ -18,19 +18,73 @@ import java.util.UUID
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 
+class TextPane(
+  val view: Pane,
+  val storyViewModel: viewModel.Story,
+  val textInput: viewModel.TextInput,
+  val paneCenterViewModel: viewModel.PaneCenter,
+  val dispatcher: Dispatcher[IO],
+  val recorderQueue: Queue[IO, Option[ButtonMessage]],
+  val storageDirectory: StorageDirectory
+):
+  view.onMouseClicked = event =>
+    val textValue = textInput.inputProperty.value
+    if textValue.nonEmpty then
+      event.consume()
+      textInput.inputProperty.value = ""
+      val wordModel = model.Word.fromLettersAndCoordinates(
+        textValue,
+        paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+        paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+      )
+      storyViewModel.addWordToCurrentFrame(wordModel)
+
+  view.onScroll = event =>
+    val isForward = event.getDeltaY > 0
+    val isBackward = event.getDeltaY < 0
+    if isForward then
+      storyViewModel.toNextFrame
+    if isBackward then
+      storyViewModel.toPreviousFrame
+
+  view.onMousePressed = event =>
+    val textValue = textInput.inputProperty.value
+    if textValue.isBlank then {
+      event.consume()
+      view.setStyle("-fx-background-color: dark-grey")
+      val filePath = s"${storageDirectory.value}/${UUID.randomUUID()}.wav"
+      dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage(filePath))))
+    }
+
+  view.onMouseReleased = event =>
+    val textValue = textInput.inputProperty.value
+    if textValue.isBlank then
+      event.consume()
+      view.setStyle("-fx-background-color: black")
+      val wordModel = model.Word.fromLettersAndCoordinates(
+        "ждите...",
+        paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
+        paneCenterViewModel.fromVerticalCorner(event.getY).toInt
+      )
+      storyViewModel.addWordToCurrentFrameAndUseLetters(wordModel) { letters =>
+        dispatcher.unsafeRunSync(
+          recorderQueue.offer(
+            Option(StopButtonMessage(letters))
+          )
+        )
+      }
+
 object TextPane:
 
   def apply(
-   containerWidth: ReadOnlyDoubleProperty,
-   containerHeight: ReadOnlyDoubleProperty,
-   bottomOffset: ReadOnlyDoubleProperty,
-   textInput: viewModel.TextInput,
-   dispatcher: Dispatcher[IO],
-   recorderQueue: Queue[IO, Option[ButtonMessage]],
-   storageDirectory: StorageDirectory
+    containerWidth: ReadOnlyDoubleProperty,
+    containerHeight: ReadOnlyDoubleProperty,
+    bottomOffset: ReadOnlyDoubleProperty,
+    textInput: viewModel.TextInput,
+    dispatcher: Dispatcher[IO],
+    recorderQueue: Queue[IO, Option[ButtonMessage]],
+    storageDirectory: StorageDirectory
   ) =
-
-
     val storyModel = model.Story(model.Identifier(UUID.randomUUID()), Map.empty[model.Number, model.Frame])
     val number = model.Number(1)
 
@@ -49,104 +103,24 @@ object TextPane:
       paneCenterViewModel
     )
 
-    var storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel)
+    val storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel)
 
 //    var subscription =
     frameViewModel.words.onChange {
       pane.children.clear()
       frameViewModel.words.value.map { (numberModel, wordViewModel) =>
-        val wordDisplay = WordDisplay(wordViewModel)
-
-        wordDisplay.onMouseClicked = event =>
-          val textValue = textInput.inputProperty.value
-          if textValue.nonEmpty then {
-            event.consume()
-            textInput.inputProperty.value = ""
-            val newWordModel = model.Word.fromLettersAndCoordinates(
-              textValue,
-              paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
-              paneCenterViewModel.fromVerticalCorner(event.getY).toInt
-            )
-            storyViewModel = storyViewModel.startNewFrameWithWord(newWordModel)
-          }
-
-        wordDisplay.onMousePressed = event =>
-          val textValue = textInput.inputProperty.value
-          if textValue.isBlank then {
-            event.consume()
-            pane.setStyle("-fx-background-color: dark-grey")
-            val filePath = s"${storageDirectory.value}/${UUID.randomUUID()}.wav"
-            dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage(filePath))))
-          }
-
-        wordDisplay.onMouseReleased = event =>
-          val textValue = textInput.inputProperty.value
-          if textValue.isBlank then
-            event.consume()
-            pane.setStyle("-fx-background-color: black")
-            val wordModel = model.Word.fromLettersAndCoordinates(
-              "ждите...",
-              paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
-              paneCenterViewModel.fromVerticalCorner(event.getY).toInt
-            )
-            storyViewModel = storyViewModel.startNewFrameWithWordAndUseLetters(wordModel) { letters =>
-              dispatcher.unsafeRunSync(
-                recorderQueue.offer(
-                  Option(StopButtonMessage(letters))
-                )
-              )
-            }
-
-        pane.getChildren.addOne(wordDisplay)
+        val wordDisplay = WordDisplay(wordViewModel, storyViewModel)
+        pane.getChildren.addOne(wordDisplay.view)
       }
     }
 
-    pane.onMouseClicked = event =>
-      val textValue = textInput.inputProperty.value
-      if textValue.nonEmpty then
-        event.consume()
-        textInput.inputProperty.value = ""
-        val wordModel = model.Word.fromLettersAndCoordinates(
-          textValue,
-          paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
-          paneCenterViewModel.fromVerticalCorner(event.getY).toInt
-        )
-        storyViewModel = storyViewModel.addWordToCurrentFrame(wordModel)
-
-    pane.onScroll = event =>
-      val isForward = event.getDeltaY > 0
-      val isBackward = event.getDeltaY < 0
-      if isForward then
-        storyViewModel = storyViewModel.toNextFrame
-      if isBackward then
-        storyViewModel = storyViewModel.toPreviousFrame
-
-    pane.onMousePressed = event =>
-      val textValue = textInput.inputProperty.value
-      if textValue.isBlank then {
-        event.consume()
-        pane.setStyle("-fx-background-color: dark-grey")
-        val filePath = s"${storageDirectory.value}/${UUID.randomUUID()}.wav"
-        dispatcher.unsafeRunSync(recorderQueue.offer(Option(StartButtonMessage(filePath))))
-      }
-
-    pane.onMouseReleased = event =>
-      val textValue = textInput.inputProperty.value
-      if textValue.isBlank then
-        event.consume()
-        pane.setStyle("-fx-background-color: black")
-        val wordModel = model.Word.fromLettersAndCoordinates(
-          "ждите...",
-          paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
-          paneCenterViewModel.fromVerticalCorner(event.getY).toInt
-        )
-        storyViewModel = storyViewModel.addWordToCurrentFrameAndUseLetters(wordModel) { letters =>
-          dispatcher.unsafeRunSync(
-            recorderQueue.offer(
-              Option(StopButtonMessage(letters))
-            )
-          )
-        }
-
-    pane
+    new TextPane(
+      pane,
+      storyViewModel,
+      textInput,
+      paneCenterViewModel,
+      dispatcher,
+      recorderQueue,
+      storageDirectory
+    )
 

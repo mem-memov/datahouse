@@ -1,5 +1,7 @@
 package memmemov.datahouse.view
 
+import javafx.geometry.NodeOrientation
+import memmemov.datahouse.viewModel.Word
 import memmemov.datahouse.{model, viewModel}
 import scalafx.Includes.*
 import scalafx.scene.Group
@@ -8,9 +10,41 @@ import scalafx.scene.text.{Font, Text}
 import scalafx.scene.shape.Rectangle
 import scalafx.scene.control.Label
 
+class WordDisplay(
+  val view: Group,
+  val wordViewModel: viewModel.Word,
+  val storyViewModel: viewModel.Story
+):
+  var dragOffsetX: Double = 0
+  var dragOffsetY: Double = 0
+  var isDragging: Boolean = false
+
+  view.onMousePressed = mouseEvent =>
+    mouseEvent.consume()
+    isDragging = false
+    dragOffsetX = mouseEvent.getX - wordViewModel.position.cornerHorizontal.value
+    dragOffsetY = mouseEvent.getY - wordViewModel.position.cornerVertical.value
+
+  view.onMouseDragged = mouseEvent =>
+    mouseEvent.consume()
+    isDragging = true
+    wordViewModel.position.moveToCornerHorizontal(mouseEvent.getX - dragOffsetX)
+    wordViewModel.position.moveToCornerVertical(mouseEvent.getY - dragOffsetY)
+
+  view.onMouseReleased = mouseEvent =>
+    mouseEvent.consume()
+    dragOffsetX = 0
+    dragOffsetY = 0
+
+    view.onMouseClicked = mouseEvent =>
+      if !isDragging then
+        mouseEvent.consume()
+        storyViewModel.startNewBlankFrame()
+
+
 object WordDisplay:
 
-  def apply(word: viewModel.Word) =
+  def apply(word: viewModel.Word, story: viewModel.Story): WordDisplay =
 
     val textItem = new Text {
       text <== word.letters
@@ -40,20 +74,4 @@ object WordDisplay:
       rectangleItem.setWidth(textItem.layoutBounds.value.getWidth + 10)
     }
 
-    var dragOffsetX: Double = 0
-    var dragOffsetY: Double = 0
-
-    group.onMousePressed = mouseEvent =>
-      mouseEvent.consume()
-      dragOffsetX = mouseEvent.getX - word.position.cornerHorizontal.value
-      dragOffsetY = mouseEvent.getY - word.position.cornerVertical.value
-
-    group.onMouseDragged = mouseEvent =>
-      mouseEvent.consume()
-      word.position.moveToCornerHorizontal(mouseEvent.getX - dragOffsetX)
-      word.position.moveToCornerVertical(mouseEvent.getY - dragOffsetY)
-
-    group.onMouseReleased = mouseEvent =>
-      mouseEvent.consume()
-
-    group
+    new WordDisplay(group, word, story)
