@@ -25,13 +25,17 @@ class Story(
     frame.addWord(wordModel)
     ()
 
-  def addWordToCurrentFrame(wordModel: model.Word): Unit =
+  def addWordToCurrentFrame(textValue: String, horizontal: Int, vertical: Int): Unit =
+    val wordNumber = frame.maxKey.map(_.increment).getOrElse(model.Number(1))
+    val wordModel = model.Word.fromLettersAndCoordinates(wordNumber, textValue, horizontal, vertical)
     frame.addWord(wordModel)
     storyModel = frame.updateStory(numberModel, storyModel)
     ()
 
-  def addWordToCurrentFrameAndUseLetters(wordModel: model.Word)(useLetters: StringProperty => Unit): Unit =
-    val (numberM, wordVM) = frame.addWord(wordModel)
+  def addWordToCurrentFrameAndUseLetters(textValue: String, horizontal: Int, vertical: Int)(useLetters: StringProperty => Unit): Unit =
+    val wordNumber = frame.maxKey.map(_.increment).getOrElse(model.Number(1))
+    val wordModel = model.Word.fromLettersAndCoordinates(wordNumber, textValue, horizontal, vertical)
+    val wordVM = frame.addWord(wordModel)
     useLetters(wordVM.letters)
     storyModel = frame.updateStory(numberModel, storyModel)
     ()

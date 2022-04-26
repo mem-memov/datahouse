@@ -23,6 +23,7 @@ class TextPane(
   val storyViewModel: viewModel.Story,
   val textInput: viewModel.TextInput,
   val paneCenterViewModel: viewModel.PaneCenter,
+  val selectionViewModel: viewModel.Selection,
   val dispatcher: Dispatcher[IO],
   val recorderQueue: Queue[IO, Option[ButtonMessage]],
   val storageDirectory: StorageDirectory
@@ -32,12 +33,11 @@ class TextPane(
     if textValue.nonEmpty then
       event.consume()
       textInput.inputProperty.value = ""
-      val wordModel = model.Word.fromLettersAndCoordinates(
+      storyViewModel.addWordToCurrentFrame(
         textValue,
         paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
         paneCenterViewModel.fromVerticalCorner(event.getY).toInt
       )
-      storyViewModel.addWordToCurrentFrame(wordModel)
 
   view.onScroll = event =>
     val isForward = event.getDeltaY > 0
@@ -61,12 +61,11 @@ class TextPane(
     if textValue.isBlank then
       event.consume()
       view.setStyle("-fx-background-color: black")
-      val wordModel = model.Word.fromLettersAndCoordinates(
+      storyViewModel.addWordToCurrentFrameAndUseLetters(
         "ждите...",
         paneCenterViewModel.fromHorizontalCorner(event.getX).toInt,
         paneCenterViewModel.fromVerticalCorner(event.getY).toInt
-      )
-      storyViewModel.addWordToCurrentFrameAndUseLetters(wordModel) { letters =>
+      ) { letters =>
         dispatcher.unsafeRunSync(
           recorderQueue.offer(
             Option(StopButtonMessage(letters))
@@ -99,17 +98,19 @@ object TextPane:
     val paneCenterViewModel = viewModel.PaneCenter(pane.width, pane.height)
 
     val frameViewModel = viewModel.Frame.fromModel(
-      model.Frame(Map.empty[model.Number, model.Word]),
+      model.Frame(number, Map.empty[model.Number, model.Word]),
       paneCenterViewModel
     )
 
     val storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel)
 
+    val selectionViewModel = viewModel.Selection()
+
 //    var subscription =
     frameViewModel.words.onChange {
       pane.children.clear()
       frameViewModel.words.value.map { (numberModel, wordViewModel) =>
-        val wordDisplay = WordDisplay(wordViewModel, storyViewModel)
+        val wordDisplay = WordDisplay(wordViewModel, frameViewModel, storyViewModel, selectionViewModel)
         pane.getChildren.addOne(wordDisplay.view)
       }
     }
@@ -119,6 +120,7 @@ object TextPane:
       storyViewModel,
       textInput,
       paneCenterViewModel,
+      selectionViewModel,
       dispatcher,
       recorderQueue,
       storageDirectory

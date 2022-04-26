@@ -1,6 +1,7 @@
 package memmemov.datahouse.model
 
 case class Word(
+  number: Number,
   letters: String,
   position: Position,
   forwardWordReferences: List[ForwardWordReference],
@@ -8,8 +9,9 @@ case class Word(
 )
 
 object Word:
-  def fromLettersAndCoordinates(letters: String, horizontal: Int, vertical: Int): Word =
+  def fromLettersAndCoordinates(n: Number, letters: String, horizontal: Int, vertical: Int): Word =
     apply(
+      number = n,
       letters = letters,
       position = Position(
         horizontal = Coordinate(horizontal),

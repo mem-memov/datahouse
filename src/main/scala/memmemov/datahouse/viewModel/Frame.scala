@@ -2,19 +2,19 @@ package memmemov.datahouse.viewModel
 
 import scalafx.Includes._
 import memmemov.datahouse.{model, viewModel}
-import scalafx.beans.property.MapProperty
+import scalafx.beans.property.{MapProperty, ObjectProperty}
 import scalafx.collections.ObservableMap
 
 trait Frame:
 
   val paneCenter: PaneCenter
+  val number: ObjectProperty[model.Number]
   val words: MapProperty[model.Number, Word]
 
-  def addWord(wordModel: model.Word): (model.Number, Word) =
-    val newNumber = maxKey.map(_.increment).getOrElse(model.Number(1))
+  def addWord(wordModel: model.Word): Word =
     val newWord = Word.fromModel(wordModel, paneCenter: PaneCenter)
-    words.put(newNumber, newWord)
-    (newNumber, newWord)
+    words.put(wordModel.number, newWord)
+    newWord
 
   def isEmpty: Boolean = words.value.isEmpty
   def nonEmpty: Boolean = words.value.nonEmpty
@@ -23,9 +23,9 @@ trait Frame:
     val wordModels = words.value.toMap.map {
       case (numberModel, word) => (numberModel, word.toModel)
     }
-    model.Frame(wordModels)
+    model.Frame(number.value, wordModels)
 
-  private def maxKey: Option[model.Number] =
+  def maxKey: Option[model.Number] =
     words.value.keys.toList.foldLeft(Option.empty) { (maxKey, key) =>
       maxKey match
         case None => Some(key)
@@ -60,4 +60,5 @@ object Frame:
     val observableMap = ObservableMap.from(mapWithWords)
     new Frame:
       override val paneCenter: PaneCenter = center
+      override val number: ObjectProperty[model.Number] = ObjectProperty(this, "number", data.number)
       override val words: MapProperty[model.Number, Word] = MapProperty(this, "words", observableMap)
