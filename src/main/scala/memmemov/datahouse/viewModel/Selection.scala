@@ -8,6 +8,7 @@ trait Selection:
 
   val forwardWordReferences: SetProperty[ForwardWordReference]
 
+
 object Selection:
 
   def apply() =

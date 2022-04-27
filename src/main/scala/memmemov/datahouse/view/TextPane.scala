@@ -102,9 +102,9 @@ object TextPane:
       paneCenterViewModel
     )
 
-    val storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel)
-
     val selectionViewModel = viewModel.Selection()
+
+    val storyViewModel = viewModel.Story.fromModel(number, storyModel, frameViewModel, selectionViewModel)
 
 //    var subscription =
     frameViewModel.words.onChange {

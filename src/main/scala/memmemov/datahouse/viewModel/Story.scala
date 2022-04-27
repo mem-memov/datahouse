@@ -1,12 +1,14 @@
 package memmemov.datahouse.viewModel
 
 import memmemov.datahouse.model
+import memmemov.datahouse.model.ForwardWordReference
 import scalafx.beans.property.StringProperty
 
 class Story(
   var numberModel: model.Number,
   var storyModel: model.Story,
   val frame: Frame,
+  val selection: Selection
 ):
   def toModel: model.Story = storyModel
 
@@ -16,20 +18,35 @@ class Story(
       case None => model.Number(1)
       case Some(n) => n.increment
 
-  def startNewFrameWithWord(wordModel: model.Word): Unit =
-    storyModel = frame.updateStory(numberModel, storyModel)
-    frame.words.clear()
-    numberModel = storyModel.maxKey match
-      case None => model.Number(1)
-      case Some(n) => n.increment
-    frame.addWord(wordModel)
-    ()
-
   def addWordToCurrentFrame(textValue: String, horizontal: Int, vertical: Int): Unit =
     val wordNumber = frame.maxKey.map(_.increment).getOrElse(model.Number(1))
-    val wordModel = model.Word.fromLettersAndCoordinates(wordNumber, textValue, horizontal, vertical)
+
+    val wordModel = selection.forwardWordReferences.value.foldLeft(
+      model.Word.fromLettersAndCoordinates(wordNumber, textValue, horizontal, vertical)
+    ) { (wordModel, forwardWordReference) =>
+      storyModel.findWordByReference(forwardWordReference) match
+        case None =>
+          wordModel
+        case Some(existingWord) =>
+          val newWordBackwardWordReferences = wordModel.backwardWordReferences.appended(
+            forwardWordReference.toBackwardWordReference
+          )
+          wordModel.copy(backwardWordReferences = newWordBackwardWordReferences)
+    }
     frame.addWord(wordModel)
     storyModel = frame.updateStory(numberModel, storyModel)
+    storyModel = selection.forwardWordReferences.value.foldLeft(storyModel) { (storyModel, forwardWordReference) =>
+      storyModel.findWordByReference(forwardWordReference) match
+        case None => storyModel
+        case Some(existingWord) =>
+          val existingWordForwardWordReferences = existingWord.forwardWordReferences.appended(
+            ForwardWordReference(storyModel.identifier, numberModel, model.Number(1))
+          )
+          val updatedExistingWord = existingWord.copy(forwardWordReferences = existingWordForwardWordReferences)
+          storyModel.replaceWordAtReference(updatedExistingWord, forwardWordReference)
+    }
+    println(storyModel)
+    selection.forwardWordReferences.value.clear()
     ()
 
   def addWordToCurrentFrameAndUseLetters(textValue: String, horizontal: Int, vertical: Int)(useLetters: StringProperty => Unit): Unit =
@@ -64,6 +81,6 @@ class Story(
 
 object Story:
 
-  def fromModel(n: model.Number, s: model.Story, f: Frame): Story =
+  def fromModel(numberModel: model.Number, storyModel: model.Story, frame: Frame, selection: Selection): Story =
 
-    new Story(n, s, f)
+    new Story(numberModel, storyModel, frame, selection)

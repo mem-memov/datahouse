@@ -9,14 +9,16 @@ trait Word:
   val number: model.Number
   val letters: StringProperty
   val position: Position
+  val forwardWordReferences: List[ForwardWordReference]
+  val backwardWordReferences: List[BackwardWordReference]
 
   def toModel: model.Word =
     model.Word(
       number,
       letters.value,
       position.toModel,
-      List.empty[ForwardWordReference],
-      List.empty[BackwardWordReference]
+      forwardWordReferences,
+      backwardWordReferences
     )
 
 object Word:
@@ -26,3 +28,5 @@ object Word:
       override val number: model.Number = data.number
       override val letters = new StringProperty(this, "letters", data.letters)
       override val position: Position = Position.fromModel(data.position, center)
+      override val forwardWordReferences: List[ForwardWordReference] = data.forwardWordReferences
+      override val backwardWordReferences: List[BackwardWordReference] = data.backwardWordReferences
