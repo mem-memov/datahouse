@@ -1,7 +1,6 @@
 package memmemov.datahouse.view
 
 import javafx.geometry.NodeOrientation
-import memmemov.datahouse.model.ForwardWordReference
 import memmemov.datahouse.viewModel.Word
 import memmemov.datahouse.{model, viewModel}
 import scalafx.Includes.*
@@ -42,12 +41,12 @@ class WordDisplay(
     view.onMouseClicked = mouseEvent =>
       if !isDragging then
         mouseEvent.consume()
-        val forwardWordReference = ForwardWordReference(
+        val backwardWordReference = model.BackwardWordReference(
           storyIdentifier = storyViewModel.storyModel.identifier,
           frameNumber = frameViewModel.number.value,
           wordNumber = wordViewModel.number
         )
-        selectionViewModel.forwardWordReferences.value.addOne(forwardWordReference)
+        selectionViewModel.backwardWordReferences.value.addOne(backwardWordReference)
         storyViewModel.startNewBlankFrame()
 
 

@@ -19,33 +19,31 @@ class Story(
       case Some(n) => n.increment
 
   def addWordToCurrentFrame(textValue: String, horizontal: Int, vertical: Int): Unit =
+    // new word
     val wordNumber = frame.maxKey.map(_.increment).getOrElse(model.Number(1))
-
-    val wordModel = selection.forwardWordReferences.value.foldLeft(
+    val wordModel = selection.backwardWordReferences.value.foldLeft(
       model.Word.fromLettersAndCoordinates(wordNumber, textValue, horizontal, vertical)
-    ) { (wordModel, forwardWordReference) =>
-      storyModel.findWordByReference(forwardWordReference) match
+    ) { (wordModel, backwardWordReference) =>
+      storyModel.findWordByReference(backwardWordReference) match
         case None =>
           wordModel
         case Some(existingWord) =>
-          val newWordBackwardWordReferences = wordModel.backwardWordReferences.appended(
-            forwardWordReference.toBackwardWordReference
-          )
+          val newWordBackwardWordReferences = wordModel.backwardWordReferences.appended(backwardWordReference)
           wordModel.copy(backwardWordReferences = newWordBackwardWordReferences)
     }
     frame.addWord(wordModel)
     storyModel = frame.updateStory(numberModel, storyModel)
-    storyModel = selection.forwardWordReferences.value.foldLeft(storyModel) { (storyModel, forwardWordReference) =>
-      storyModel.findWordByReference(forwardWordReference) match
+
+    // existing word
+    storyModel = selection.backwardWordReferences.value.foldLeft(storyModel) { (storyModel, backwardWordReference) =>
+      storyModel.findWordByReference(backwardWordReference) match
         case None => storyModel
         case Some(existingWord) =>
-          val existingWordForwardWordReferences = existingWord.forwardWordReferences.appended(
-            ForwardWordReference(storyModel.identifier, numberModel, model.Number(1))
-          )
+          val forwardWordReference = ForwardWordReference(storyModel.identifier, numberModel, model.Number(1))
+          val existingWordForwardWordReferences = existingWord.forwardWordReferences.appended(forwardWordReference)
           val updatedExistingWord = existingWord.copy(forwardWordReferences = existingWordForwardWordReferences)
-          storyModel.replaceWordAtReference(updatedExistingWord, forwardWordReference)
+          storyModel.replaceWordAtReference(updatedExistingWord, backwardWordReference)
     }
-    println(storyModel)
     selection.forwardWordReferences.value.clear()
     ()
 
